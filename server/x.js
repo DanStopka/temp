@@ -1,4 +1,5 @@
-﻿randWDclassic = function(n){
+﻿
+randWDclassic = function(n){
     var s ='', abd ='abcdefghijklmnopqrstuvwxyz0123456789', aL = abd.length;
     while(s.length < n)
         s += abd[Math.random() * aL|0];
@@ -26,10 +27,8 @@ genRandomTags = function(){
 };
 
 createNode = function(_parent, _tags, _meta){
-    var id = new Meteor.Collection.ObjectID();
-    var o = {_id: id, parent: _parent, tags : _tags, meta : _meta};
-    Node.insert(o);
-    return id;
+    var o = {parent: _parent, tags : _tags, meta : _meta};
+    return Node.insert(o);
 };
 
 f = function(_parent, level, limit){
@@ -49,7 +48,7 @@ Node.remove({});
 if (Node.find().count() === 0) {
 
     for (var i = 0; i < 1; i++) {
-        f(null, 0, 3);
+        f(null, 0, 4);
     }
 
 }
