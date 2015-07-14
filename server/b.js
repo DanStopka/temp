@@ -24,7 +24,7 @@ function Root(data){
   создает дочерний узел
 
  getParents()
-  возвращает все родительские узлы, если несколько - то массивом, если один - один
+  возвращает все родительские узлы массивом
 
 
 
@@ -32,7 +32,7 @@ function Root(data){
 
 function Node(id, parent, data){
     if (id === undefined) {
-            var creationNodeData = {parent: parent};
+            var creationNodeData = {parent: _.flatten(parent)};
             _.extend(creationNodeData, data);
             var _id = Tree.insert(creationNodeData);
             this.data = Tree.findOne({_id: _id});
@@ -52,8 +52,8 @@ function Node(id, parent, data){
     };
 
     this.getParents = function() {
+        var r = [];
         if (this.data.parent instanceof Array) {
-            var r = [];
             var arr = Tree.find({
                 _id: { $in: this.data.parent}}).fetch();
             for (var i = 0; i < arr.length; i++){
@@ -62,13 +62,15 @@ function Node(id, parent, data){
                 );
             }
             return r;
-        } else {
-            var tmp = Tree.findOne({_id:this.data.parent});
-            return new Node(tmp._id, tmp.parent, _.omit(tmp, '_id', 'parent'));
         }
     };
 
-    this.addParent = function(){
+    this.addParents = function(){
+        if (this.data.parent != null && arguments.length > 0){
+            var l = arguments.length;
+            for (var i = 0; i < l; i++)
+                this.data.parent.push(arguments[i].data._id);
+        }
 
     }
 
@@ -83,7 +85,7 @@ function Node(id, parent, data){
 Tree.remove({});
 
 var root = new Root({a:1, b:'2'});
-var root1 = new Root({a:1, b:'3'});
+
 //console.log('root - ',  root);
 
 var parent1 = root.createChild({asd:'11111111'});
@@ -96,11 +98,20 @@ var parent2 = root.createChild({asd:'22222222'});
 
 var node = new Node(undefined,[parent1.data._id, parent2.data._id]);
 
-var arr = node.getParents();
+node.addParents(parent1, node);
+node.addParents(node);
 
-console.log(parent1.getParents());
 
-//console.log(arr);
+//var arr = node.getParents();
+
+
+//parent1.addParents(parent1);
+console.log(node);
+
+
+
+
+//console.log(arr[0]);
 
 
 //console.log(node);
