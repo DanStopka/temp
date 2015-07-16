@@ -83,10 +83,16 @@ _.extend(Node.prototype, {
         if (this.parent == null) return -1;
         var id = this._id;
         var children = this.getChildren();
+        //console.log(children);
         for (var i = 0; i < children.length; i++){
+            //console.log('before', children[i].parent);
             children[i].parent = _.without(children[i].parent, id);
+            //console.log('after', children[i].parent);
+            //console.log(children[i].parent);
             if (children[i].parent.length == 0){
                 children[i].deleteNode();
+            } else {
+                Tree.update({_id:children[i]._id}, {$set:{parent: children[i].parent}});
             }
         }
         Tree.remove({_id: id});
@@ -99,6 +105,15 @@ _.extend(Node.prototype, {
 
     isParentFor: function(node){
         return _.include(node.parent, this._id);
+    },
+
+    deleteChildNodes: function(){
+        var args = _.flatten(arguments);
+        for (var i = 0; i < args.length; i++){
+            if (this.isParentFor(args[i])){
+                args[i].deleteNode();
+            }
+        }
     },
 
 
@@ -118,9 +133,6 @@ _.extend(Node.prototype, {
         //todo deleteChildRelation*
     },
 
-    dropChildNode: function(){
-        //todo physical drop child node*
-    },
 
     deleteParentRelation: function(){
         //todo deleteParentRelation*
@@ -189,7 +201,9 @@ var child4 = child1.createChild({child4:32132});
 var child5 = child4.createChild({child5:32132});
 child5.addParents(root);
 
-console.log(child1.deleteNode());
+child4.deleteNode();
+
+//root.deleteChildNodes(child1, child2);
 
 
 
