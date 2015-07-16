@@ -1,7 +1,3 @@
-// Write your package code here!
-
-Tree = new Meteor.Collection('node');
-
 function Node(id, parent, data){
     //root constructor
     if (parent == null){
@@ -32,10 +28,9 @@ function Node(id, parent, data){
     }
 
 
-
-
 }
 _.extend(Node.prototype, {
+
     isRoot: function(){
         return this.parent == null;
     },
@@ -177,7 +172,10 @@ DataTree = {
 
     nodesCount: function(){
         return Tree.find({}).count();
-
     }
+
+
+
+
 };
 

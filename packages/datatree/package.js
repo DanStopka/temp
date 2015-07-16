@@ -19,8 +19,11 @@ Package.onUse(function(api) {
   api.addFiles('node.js');
   api.addFiles('datatree.js');
 
-
+  api.export('Tree');
+  api.export('Node');
   api.export('DataTree');
+
+
 });
 
 Package.onTest(function(api) {

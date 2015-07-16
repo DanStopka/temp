@@ -1,0 +1,1 @@
+Tree = new Meteor.Collection('node');
