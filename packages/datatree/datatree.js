@@ -1,5 +1,7 @@
 // Write your package code here!
 
+Tree = new Meteor.Collection('node');
+
 function Node(id, parent, data){
     //root constructor
     if (parent == null){
@@ -164,8 +166,18 @@ DataTree = {
     createRoot: function(data){
         return new Node(undefined, null, data);
     },
+
     getRoot: function(){
         return new Node(undefined, null);
+    },
+
+    clear: function(){
+        Tree.remove({});
+    },
+
+    nodesCount: function(){
+        return Tree.find({}).count();
+
     }
 };
 

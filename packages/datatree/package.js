@@ -15,6 +15,7 @@ Package.onUse(function(api) {
 
 
   api.versionsFrom('1.1.0.2');
+  api.addFiles('tree.js');
   api.addFiles('node.js');
   api.addFiles('datatree.js');
 
