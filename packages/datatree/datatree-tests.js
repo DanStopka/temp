@@ -18,11 +18,16 @@ Tinytest.add('create subgraph', function (test) {
   test.equal(root.childrenCount(), childrenCount + 3);
   console.log('root children after 3 child added', root.childrenCount());
 
-  child3.deleteNode(function() {
-        test.equal(root.childrenCount(), childrenCount + 2);
-        console.log('root children after 1 child deleted', root.childrenCount());
-      }
-  );
+  //child3.deleteNode(function() {
+  //      test.equal(root.childrenCount(), childrenCount + 2);
+  //      console.log('root children after 1 child deleted', root.childrenCount());
+  //    }
+  //);
+
+  child3.deleteNode();
+  test.equal(root.childrenCount(), childrenCount + 2);
+  console.log('root children after 1 child deleted', root.childrenCount());
+
   //
   //var child3 = child1.createChild({child3:'child3'});
   //test.equal(child1.childrenCount(), 1);

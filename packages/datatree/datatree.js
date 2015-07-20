@@ -1,18 +1,54 @@
+function without(arr, arr1){
+    var r = arr;
+    for (var i = 0; i < arr1.length; i++){
+        r = _.without(r, arr1[i])
+    }
+    return r;
+}
+
+
 Meteor.methods({
     clear:function(){
         Tree.remove({});
     },
 
-    update:function(){
+    getChildren: function(_id){
+        var r = [];
+        var tmp = Tree.find({parent: {$in:[_id]}}).fetch();
+        for (var i = 0; i < tmp.length; i++){
+            r.push(new Node(tmp[i]._id, tmp[i].parent, tmp[i].data));
+        }
+        return r;
+    },
 
+    deleteNode: function(id){
+        var arr = [id];
+        function x() {
+            var bLength = arr.length;
+            var found = Tree.find({parent: {$in: arr}}).fetch();
+            for (var i = 0; i < found.length; i++){
+                if (without(found[i].parent, arr).length == 0){
+                    arr = _.union(arr, found[i]._id);
+                }
+            }
+
+            if (arr.length != bLength) {
+                x();
+            }
+        }
+
+        x();
+
+        Tree.remove ({_id:{$in:arr}});
+        Tree.update({parent: {$in: arr}}, {$pullAll: {parent: arr}}, {multi: true});
 
     }
 
-
-
-
-
 });
+
+
+
+
 
 function Node(id, parent, data){
     //root constructor
@@ -88,46 +124,22 @@ _.extend(Node.prototype, {
     },
 
     haveChildren:function(){
-        //return Tree.find({parent: {$in:[this._id]}}).count() > 0;
-        return this.chCount > 0;
+        return Tree.find({parent: {$in:[this._id]}}).count() > 0;
     },
 
     childrenCount: function(){
-        //return Tree.find({parent: {$in:[this._id]}}).count();
-        return this.chCount
+        return Tree.find({parent: {$in:[this._id]}}).count();
     },
 
     getChildren: function(){
-        var r = [];
-        var tmp = Tree.find({parent: {$in:[this._id]}}).fetch();
-        for (var i = 0; i < tmp.length; i++){
-            r.push(new Node(tmp[i]._id, tmp[i].parent, tmp[i].data));
-        }
-        return r;
+        return Meteor.call('getChildren', this._id);
     },
 
-    deleteNode: function(callback){ //delete children nodes recursive (if parents = [])
-        if (this.parent == null) return -1;
-        var id = this._id;
-        //decrement chCount all of his parents
-        for (var j = 0; j < this.parentCount(); j++){
-            //var tmp = Tree.findOne({_id: this.parent[j]});
-            Tree.update({_id: this.parent[j]}, {$inc: {chCount:-1}});
-            //console.log(tmp);
-        }
-
-        var children = this.getChildren();
-        for (var i = 0; i < children.length; i++){
-            children[i].parent = _.without(children[i].parent, id);
-            if (children[i].parent.length == 0){
-                children[i].deleteNode();
-            } else {
-                Tree.update({_id:children[i]._id}, {$set:{parent: children[i].parent}});
-            }
-        }
-        Tree.remove({_id: id}, callback);
-        return 0;
+    deleteNode: function(){
+        Meteor.call('deleteNode', this._id);
+        //callback();
     },
+
 
     isChildFor: function(node){
         return _.include(this.parent, node._id);
@@ -146,24 +158,6 @@ _.extend(Node.prototype, {
         }
     },
 
-
-    // delete all child relations(in params) from node, if node left
-    deleteChildRelation: function(){
-        var args = _.flatten(arguments);
-        for (var i = 0; i < args.length; i++){
-            //удаляю id объекта из парентов параметра
-            //если парент остается [], то нужно удалить этот узел и ссылки в парентах на него
-            //todo, nothing ready
-        }
-
-        console.log(args);
-
-
-
-        //todo deleteChildRelation*
-    },
-
-
     deleteParentRelation: function(){
         //todo deleteParentRelation*
     },
@@ -173,7 +167,7 @@ _.extend(Node.prototype, {
     },
 
     addTags: function(){
-        //todo addTags
+        Tree.update({_id:this._id}, {$addToSet:{tags:[arguments]}});
     },
 
     deleteTags: function(){
