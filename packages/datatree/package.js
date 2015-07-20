@@ -29,5 +29,5 @@ Package.onUse(function(api) {
 Package.onTest(function(api) {
   api.use('tinytest');
   api.use('datatree');
-  api.addFiles('datatree-tests.js');
+  api.addFiles('datatree-tests.js', 'server');
 });

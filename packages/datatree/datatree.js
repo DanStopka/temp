@@ -1,29 +1,50 @@
+Meteor.methods({
+    clear:function(){
+        Tree.remove({});
+    },
+
+    update:function(){
+
+
+    }
+
+
+
+
+
+});
+
 function Node(id, parent, data){
     //root constructor
     if (parent == null){
         var tmp = Tree.findOne({parent:null}); //search root in db
         if (tmp === undefined){ //root not exist in db, creation
-            this._id = Tree.insert({parent: null, data: data});
+            this._id = Tree.insert({parent: null, data: data, chCount: 0, pCount: 0});
             this.parent = null;
             this.data = data;
+            this.chCount = 0;
         } else { //root exists in db - returning them
             this._id = tmp._id;
             this.parent = tmp.parent;
             this.data = tmp.data;
+            this.chCount = tmp.chCount;
         }
     }
     //node constructor
     else { //parent parameter
         if (id === undefined){ //creation node
-            var genId = Tree.insert({parent:_.flatten([parent]), data: data});
+            var _parent = _.flatten([parent]);
+            var genId = Tree.insert({parent: _parent, data: data});
             this._id = genId;
-            this.parent = _.flatten([parent]);
+            this.parent = _parent;
             this.data = data;
+            this.chCount = 0;
         } else {
             var tmp = Tree.findOne({_id: id});
             this._id = tmp._id;
             this.parent = tmp.parent;
             this.data = tmp.data;
+            this.chCount = tmp.chCount;
         }
     }
 
@@ -36,6 +57,8 @@ _.extend(Node.prototype, {
     },
 
     createChild: function(data){
+        this.chCount++;
+        Tree.update({_id: this._id}, {$set:{chCount:this.chCount}});
         return new Node(undefined, this._id, data);
     },
 
@@ -60,12 +83,18 @@ _.extend(Node.prototype, {
         return r;
     },
 
+    parentCount: function(){
+        return this.parent.length;
+    },
+
     haveChildren:function(){
-        return Tree.find({parent: {$in:[this._id]}}).count() > 0;
+        //return Tree.find({parent: {$in:[this._id]}}).count() > 0;
+        return this.chCount > 0;
     },
 
     childrenCount: function(){
-        return Tree.find({parent: {$in:[this._id]}}).count();
+        //return Tree.find({parent: {$in:[this._id]}}).count();
+        return this.chCount
     },
 
     getChildren: function(){
@@ -77,9 +106,16 @@ _.extend(Node.prototype, {
         return r;
     },
 
-    deleteNode: function(){ //delete children nodes recursive (if parents = [])
+    deleteNode: function(callback){ //delete children nodes recursive (if parents = [])
         if (this.parent == null) return -1;
         var id = this._id;
+        //decrement chCount all of his parents
+        for (var j = 0; j < this.parentCount(); j++){
+            //var tmp = Tree.findOne({_id: this.parent[j]});
+            Tree.update({_id: this.parent[j]}, {$inc: {chCount:-1}});
+            //console.log(tmp);
+        }
+
         var children = this.getChildren();
         for (var i = 0; i < children.length; i++){
             children[i].parent = _.without(children[i].parent, id);
@@ -89,7 +125,7 @@ _.extend(Node.prototype, {
                 Tree.update({_id:children[i]._id}, {$set:{parent: children[i].parent}});
             }
         }
-        Tree.remove({_id: id});
+        Tree.remove({_id: id}, callback);
         return 0;
     },
 
@@ -167,7 +203,7 @@ DataTree = {
     },
 
     clear: function(){
-        Tree.remove({});
+        Meteor.call('clear');
     },
 
     nodesCount: function(){
