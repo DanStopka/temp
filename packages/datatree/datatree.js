@@ -1,12 +1,3 @@
-function without(arr, arr1){
-    var r = arr;
-    for (var i = 0; i < arr1.length; i++){
-        r = _.without(r, arr1[i])
-    }
-    return r;
-}
-
-
 Meteor.methods({
     clear:function(){
         Tree.remove({});
@@ -29,7 +20,7 @@ Meteor.methods({
             var found = Tree.find({parent: {$in: forSearch}}).fetch(); //founding new nodes for analyses
             forSearch = []; //reset node list for search
             for (var i = 0; i < found.length; i++){ //iterate founding list
-                if (without(found[i].parent, result).length == 0){ //checking for "to be removed"
+                if (_.difference(found[i].parent, result).length == 0){ //checking for "to be removed"
                     result = _.union(result, found[i]._id); //add new "to be removed" to result
                     forSearch = _.union(forSearch, found[i]._id); //add new "to be removed" to node list for search
                 }
@@ -43,7 +34,7 @@ Meteor.methods({
         x();
 
         Tree.remove ({_id:{$in:result}}); //deleting nodes from db
-        Tree.update({parent: {$in: result}}, {$pullAll: {parent: result}}, {multi: true}); //deleting lincs
+        Tree.update({parent: {$in: result}}, {$pullAll: {parent: result}}, {multi: true}); //deleting links
     }
 
 });
