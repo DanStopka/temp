@@ -47,15 +47,13 @@ function Node(id, parent, data){
     if (parent == null){
         var tmp = Tree.findOne({parent:null}); //search root in db
         if (tmp === undefined){ //root not exist in db, creation
-            this._id = Tree.insert({parent: null, data: data, chCount: 0, pCount: 0});
+            this._id = Tree.insert({parent: null, data: data});
             this.parent = null;
             this.data = data;
-            this.chCount = 0;
         } else { //root exists in db - returning them
             this._id = tmp._id;
             this.parent = tmp.parent;
             this.data = tmp.data;
-            this.chCount = tmp.chCount;
         }
     }
     //node constructor
@@ -66,13 +64,11 @@ function Node(id, parent, data){
             this._id = genId;
             this.parent = _parent;
             this.data = data;
-            this.chCount = 0;
         } else {
             var tmp = Tree.findOne({_id: id});
             this._id = tmp._id;
             this.parent = tmp.parent;
             this.data = tmp.data;
-            this.chCount = tmp.chCount;
         }
     }
 
@@ -158,12 +154,32 @@ _.extend(Node.prototype, {
         //todo physical drop parent node*
     },
 
+    clearTags: function(){
+        Tree.update({_id:this._id}, {$set:{tags:[]}});
+        this.data.tags = [];
+    },
+
     addTags: function(){
-        Tree.update({_id:this._id}, {$addToSet:{tags:[arguments]}});
+        Tree.update({_id:this._id}, {$addToSet:{"data.tags":arguments}});
+        if (this.data === undefined) {
+            this.data = {};
+        }
+        if (this.data.tags === undefined) {
+            this.data.tags = [];
+        }
+        var args = _.flatten(arguments)
+        this.data.tags = _.union(this.data.tags, args);
+
+    },
+
+    getTags: function(){
+        return this.data.tags;
     },
 
     deleteTags: function(){
-        //todo deleteTags
+        var args = _.flatten(arguments);
+        this.data.tags = _.difference(this.data.tags, args);
+        Tree.update({_id:this._id}, {$set:{"data.tags":this.data.tags}})
     },
 
     addMetaType: function(){

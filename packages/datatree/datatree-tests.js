@@ -18,28 +18,26 @@ Tinytest.add('create subgraph', function (test) {
   test.equal(root.childrenCount(), childrenCount + 3);
   console.log('root children after 3 child added', root.childrenCount());
 
-  //child3.deleteNode(function() {
-  //      test.equal(root.childrenCount(), childrenCount + 2);
-  //      console.log('root children after 1 child deleted', root.childrenCount());
-  //    }
-  //);
-
   child3.deleteNode();
   test.equal(root.childrenCount(), childrenCount + 2);
   console.log('root children after 1 child deleted', root.childrenCount());
 
-  //
-  //var child3 = child1.createChild({child3:'child3'});
-  //test.equal(child1.childrenCount(), 1);
-  //
-  //child2.addParents(child1);
-  //test.equal(child1.childrenCount(), 2);
-  //
-  //child1.deleteNode();
-  //child2.deleteNode();
-  //console.log(child3);
-
-
-
 });
 
+Tinytest.add('tags tests (clear tags, getTags, deleteTags, addTags)', function (test) {
+  DataTree.clear();
+  DataTree.createRoot({});
+
+  var root = DataTree.getRoot();
+  root.clearTags();
+  root.addTags('123', '234', '123');
+  test.equal(root.getTags(), ['123', '234']);
+
+  root.deleteTags('123');
+  test.equal(root.getTags(), ['234']);
+  root.addTags('123', '234', '123', ['567', '890']);
+  test.equal(root.getTags(), ['234', '123', '567', '890']);
+  root.deleteTags(['123'], '567');
+  test.equal(root.getTags(), ['234', '890']);
+
+});
