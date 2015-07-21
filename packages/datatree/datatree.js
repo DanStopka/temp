@@ -16,7 +16,6 @@ Meteor.methods({
         var result = [id];             // closure array, accumulate all nodes for deleting
         var forSearch = result;        // closure array, accumulate all nodes for recursive search
         function x() {
-            var bLength = result.length; //length for comparing
             var found = Tree.find({parent: {$in: forSearch}}).fetch(); //founding new nodes for analyses
             forSearch = []; //reset node list for search
             for (var i = 0; i < found.length; i++){ //iterate founding list
@@ -26,7 +25,7 @@ Meteor.methods({
                 }
             }
 
-            if (result.length != bLength) { //if result is changed - adding process
+            if (forSearch.length > 0) { //if result is changed - adding process
                 x();
             }
         }
