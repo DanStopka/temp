@@ -1,25 +1,25 @@
 Meteor.methods({
-    clear:function(){
+    clear: function() {
         Tree.remove({});
     },
 
-    getChildren: function(_id){
+    getChildren: function(_id) {
         var r = [];
-        var tmp = Tree.find({parent: {$in:[_id]}}).fetch();
-        for (var i = 0; i < tmp.length; i++){
+        var tmp = Tree.find({parent: {$in: [_id]}}).fetch();
+        for (var i = 0; i < tmp.length; i++) {
             r.push(new Node(tmp[i]._id, tmp[i].parent, tmp[i].data));
         }
         return r;
     },
 
-    deleteNode: function(id){
+    deleteNode: function(id) {
         var result = [id];             // closure array, accumulate all nodes for deleting
         var forSearch = result;        // closure array, accumulate all nodes for recursive search
         function x() {
             var found = Tree.find({parent: {$in: forSearch}}).fetch(); //founding new nodes for analyses
             forSearch = []; //reset node list for search
-            for (var i = 0; i < found.length; i++){ //iterate founding list
-                if (_.difference(found[i].parent, result).length == 0){ //checking for "to be removed"
+            for (var i = 0; i < found.length; i++) { //iterate founding list
+                if (_.difference(found[i].parent, result).length == 0) { //checking for "to be removed"
                     result = _.union(result, found[i]._id); //add new "to be removed" to result
                     forSearch = _.union(forSearch, found[i]._id); //add new "to be removed" to node list for search
                 }
@@ -32,21 +32,18 @@ Meteor.methods({
 
         x();
 
-        Tree.remove ({_id:{$in:result}}); //deleting nodes from db
+        Tree.remove({_id: {$in: result}}); //deleting nodes from db
         Tree.update({parent: {$in: result}}, {$pullAll: {parent: result}}, {multi: true}); //deleting links
     }
 
 });
 
 
-
-
-
-function Node(id, parent, data){
+function Node(id, parent, data) {
     //root constructor
-    if (parent == null){
-        var tmp = Tree.findOne({parent:null}); //search root in db
-        if (tmp === undefined){ //root not exist in db, creation
+    if (parent == null) {
+        var tmp = Tree.findOne({parent: null}); //search root in db
+        if (tmp === undefined) { //root not exist in db, creation
             this._id = Tree.insert({parent: null, data: data});
             this.parent = null;
             this.data = data;
@@ -58,7 +55,7 @@ function Node(id, parent, data){
     }
     //node constructor
     else { //parent parameter
-        if (id === undefined){ //creation node
+        if (id === undefined) { //creation node
             var _parent = _.flatten([parent]);
             var genId = Tree.insert({parent: _parent, data: data});
             this._id = genId;
@@ -76,91 +73,94 @@ function Node(id, parent, data){
 }
 _.extend(Node.prototype, {
 
-    isRoot: function(){
+    isRoot: function() {
         return this.parent == null;
     },
 
-    createChild: function(data){
+    createChild: function(data) {
         this.chCount++;
-        Tree.update({_id: this._id}, {$set:{chCount:this.chCount}});
+        Tree.update({_id: this._id}, {$set: {chCount: this.chCount}});
         return new Node(undefined, this._id, data);
     },
 
-    addParents: function(){ //parameters Nodes in array or per ","
+    addParents: function() { //parameters Nodes in array or per ","
         var args = _.flatten(arguments);
-        for (var i = 0; i < args.length; i++){
+        for (var i = 0; i < args.length; i++) {
             this.parent = _.union(this.parent, args[i]._id);
         }
-        Tree.update({_id: this._id}, {$set:{parent: this.parent}});
+        Tree.update({_id: this._id}, {$set: {parent: this.parent}});
     },
 
-    getParents: function(){
+    getParents: function() {
         if (this.isRoot()) return [];
         var tmp = Tree.find({
-            _id: { $in: this.parent }
+            _id: {$in: this.parent}
         }).fetch();
 
         var r = [];
-        for (var i = 0; i < tmp.length; i++){
+        for (var i = 0; i < tmp.length; i++) {
             r.push(new Node(tmp[i]._id, 1));
         }
         return r;
     },
 
-    parentCount: function(){
+    parentCount: function() {
         return this.parent.length;
     },
 
-    haveChildren:function(){
-        return Tree.find({parent: {$in:[this._id]}}).count() > 0;
+    haveChildren: function() {
+        return Tree.find({parent: {$in: [this._id]}}).count() > 0;
     },
 
-    childrenCount: function(){
-        return Tree.find({parent: {$in:[this._id]}}).count();
+    childrenCount: function() {
+        return Tree.find({parent: {$in: [this._id]}}).count();
     },
 
-    getChildren: function(){
+    getChildren: function() {
         return Meteor.call('getChildren', this._id);
     },
 
-    deleteNode: function(){
+    deleteNode: function() {
         Meteor.call('deleteNode', this._id);
         //callback();
     },
 
 
-    isChildFor: function(node){
+    isChildFor: function(node) {
         return _.include(this.parent, node._id);
     },
 
-    isParentFor: function(node){
+    isParentFor: function(node) {
         return _.include(node.parent, this._id);
     },
 
-    deleteChildNodes: function(){
+    deleteChildNodes: function() {
         var args = _.flatten(arguments);
-        for (var i = 0; i < args.length; i++){
-            if (this.isParentFor(args[i])){
+        for (var i = 0; i < args.length; i++) {
+            if (this.isParentFor(args[i])) {
                 args[i].deleteNode();
             }
         }
     },
 
-    deleteParentRelation: function(){
+    deleteParentRelation: function() {
         //todo deleteParentRelation*
     },
 
-    dropParentNode: function(){
+    dropParentNode: function() {
         //todo physical drop parent node*
     },
 
-    clearTags: function(){
-        Tree.update({_id:this._id}, {$set:{tags:[]}});
+    clearTags: function() {
+        Tree.update({_id: this._id}, {$set: {tags: []}});
+        if (this.data === undefined) {
+            this.data = {};
+        }
         this.data.tags = [];
     },
 
-    addTags: function(){
-        Tree.update({_id:this._id}, {$addToSet:{"data.tags":arguments}});
+    addTags: function() {
+        Tree.update({_id: this._id}, {$addToSet: {"data.tags": arguments}});
         if (this.data === undefined) {
             this.data = {};
         }
@@ -172,21 +172,26 @@ _.extend(Node.prototype, {
 
     },
 
-    getTags: function(){
+    getTags: function() {
         return this.data.tags;
     },
 
-    deleteTags: function(){
+    deleteTags: function() {
         var args = _.flatten(arguments);
         this.data.tags = _.difference(this.data.tags, args);
-        Tree.update({_id:this._id}, {$set:{"data.tags":this.data.tags}})
+        Tree.update({_id: this._id}, {$set: {"data.tags": this.data.tags}})
     },
 
-    addMetaType: function(){
+    clearMeta: function() {
+
+
+    },
+
+    addMetaType: function() {
         //todo addMetaType
     },
 
-    deleteMetaType: function(){
+    deleteMetaType: function() {
         //todo deleteMetaType
     }
 
@@ -196,23 +201,21 @@ _.extend(Node.prototype, {
 
 DataTree = {
 
-    createRoot: function(data){
+    createRoot: function(data) {
         return new Node(undefined, null, data);
     },
 
-    getRoot: function(){
+    getRoot: function() {
         return new Node(undefined, null);
     },
 
-    clear: function(){
+    clear: function() {
         Meteor.call('clear');
     },
 
-    nodesCount: function(){
+    nodesCount: function() {
         return Tree.find({}).count();
     }
-
-
 
 
 };
