@@ -22,26 +22,28 @@ Meteor.methods({
     },
 
     deleteNode: function(id){
-        var arr = [id];
+        var result = [id];             // closure array, accumulate all nodes for deleting
+        var forSearch = result;        // closure array, accumulate all nodes for recursive search
         function x() {
-            var bLength = arr.length;
-            var found = Tree.find({parent: {$in: arr}}).fetch();
-            for (var i = 0; i < found.length; i++){
-                if (without(found[i].parent, arr).length == 0){
-                    arr = _.union(arr, found[i]._id);
+            var bLength = result.length; //length for comparing
+            var found = Tree.find({parent: {$in: forSearch}}).fetch(); //founding new nodes for analyses
+            forSearch = []; //reset node list for search
+            for (var i = 0; i < found.length; i++){ //iterate founding list
+                if (without(found[i].parent, result).length == 0){ //checking for "to be removed"
+                    result = _.union(result, found[i]._id); //add new "to be removed" to result
+                    forSearch = _.union(forSearch, found[i]._id); //add new "to be removed" to node list for search
                 }
             }
 
-            if (arr.length != bLength) {
+            if (result.length != bLength) { //if result is changed - adding process
                 x();
             }
         }
 
         x();
 
-        Tree.remove ({_id:{$in:arr}});
-        Tree.update({parent: {$in: arr}}, {$pullAll: {parent: arr}}, {multi: true});
-
+        Tree.remove ({_id:{$in:result}}); //deleting nodes from db
+        Tree.update({parent: {$in: result}}, {$pullAll: {parent: result}}, {multi: true}); //deleting lincs
     }
 
 });
